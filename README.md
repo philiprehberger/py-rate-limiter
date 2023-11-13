@@ -2,7 +2,11 @@
 
 [![Tests](https://github.com/philiprehberger/py-rate-limiter/actions/workflows/publish.yml/badge.svg)](https://github.com/philiprehberger/py-rate-limiter/actions/workflows/publish.yml)
 [![PyPI version](https://img.shields.io/pypi/v/philiprehberger-rate-limiter.svg)](https://pypi.org/project/philiprehberger-rate-limiter/)
+[![GitHub release](https://img.shields.io/github/v/release/philiprehberger/py-rate-limiter)](https://github.com/philiprehberger/py-rate-limiter/releases)
+[![Last updated](https://img.shields.io/github/last-commit/philiprehberger/py-rate-limiter)](https://github.com/philiprehberger/py-rate-limiter/commits/main)
 [![License](https://img.shields.io/github/license/philiprehberger/py-rate-limiter)](LICENSE)
+[![Bug Reports](https://img.shields.io/github/issues/philiprehberger/py-rate-limiter/bug)](https://github.com/philiprehberger/py-rate-limiter/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/philiprehberger/py-rate-limiter/enhancement)](https://github.com/philiprehberger/py-rate-limiter/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 In-memory rate limiter with sliding window and token bucket algorithms.
@@ -39,6 +43,16 @@ print(f"Remaining: {status.remaining}/{status.limit}")
 print(f"Resets at: {status.reset_at}")
 ```
 
+### Blocking Wait
+
+```python
+# Synchronous — blocks until quota is available or timeout expires
+status = limiter.wait("user-123", timeout=5.0)
+
+# Async — awaits until quota is available
+status = await limiter.async_acquire("user-123")
+```
+
 ### Decorator
 
 ```python
@@ -64,14 +78,17 @@ RateLimiter(100, 60, Algorithm.TOKEN_BUCKET)
 
 ## API
 
-- `RateLimiter(requests, window_seconds, algorithm=SLIDING_WINDOW)` — Create a rate limiter
-- `limiter.allow(key)` — Check if request is allowed
-- `limiter.status(key)` — Get detailed `LimitStatus`
-- `limiter.reset(key)` — Reset state for a key
-- `limiter.reset_all()` — Reset state for all keys
-- `limiter.active_keys()` — List all keys with active state
-- `limiter.limit(rate)` — Decorator with rate string (e.g., `"10/minute"`)
-
+| Name | Description |
+|------|-------------|
+| `RateLimiter(requests, window_seconds, algorithm=SLIDING_WINDOW)` | Create a rate limiter |
+| `limiter.allow(key)` | Check if request is allowed |
+| `limiter.status(key)` | Get detailed `LimitStatus` |
+| `limiter.wait(key, timeout=10.0)` | Block until quota available or raise `RateLimitExceeded` |
+| `limiter.async_acquire(key)` | Async wait until quota is available |
+| `limiter.reset(key)` | Reset state for a key |
+| `limiter.reset_all()` | Reset state for all keys |
+| `limiter.active_keys()` | List all keys with active state |
+| `limiter.limit(rate)` | Decorator with rate string (e.g., `"10/minute"`) |
 
 ## Development
 
@@ -80,6 +97,13 @@ pip install -e .
 python -m pytest tests/ -v
 ```
 
+## Support
+
+If you find this package useful, consider starring the repository.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Philip%20Rehberger-blue?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/More%20packages-philiprehberger-orange)](https://github.com/philiprehberger/packages)
+
 ## License
 
-MIT
+[MIT](LICENSE)
