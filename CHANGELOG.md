@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 (2026-04-01)
+
+- Add `LEAKY_BUCKET` algorithm as a fourth strategy option
+- Add `RateLimiterGroup` for shared rate limits across multiple keys
+- Add `get_stats(key)` method returning `RateLimiterStats` with current usage, remaining tokens, and reset time without consuming a request
+- Add `RateLimiterStats` dataclass for usage statistics
+- Add async context manager support (`async with limiter:`)
+- Add standalone `rate_limit(calls, period, algorithm)` decorator for functions
+- Add async function support in `rate_limit` decorator
+
 ## 0.3.1 (2026-03-31)
 
 - Standardize README to 3-badge format with emoji Support section

@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "philiprehberger-rate-limiter"
-version = "0.3.1"
-description = "In-memory rate limiter with sliding window and token bucket"
+version = "0.4.0"
+description = "In-memory rate limiter with sliding window, token bucket, and leaky bucket algorithms."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "Philip Rehberger" }]
-keywords = ["rate-limit", "throttle", "sliding-window", "token-bucket", "api"]
+keywords = ["rate-limit", "throttle", "sliding-window", "token-bucket", "leaky-bucket"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
