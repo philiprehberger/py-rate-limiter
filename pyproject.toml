@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "philiprehberger-rate-limiter"
+version = "0.1.0"
+description = "In-memory rate limiter with sliding window and token bucket"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Philip Rehberger" }]
+keywords = ["rate-limit", "throttle", "sliding-window", "token-bucket", "api"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/philiprehberger/py-rate-limiter"
+Repository = "https://github.com/philiprehberger/py-rate-limiter"
+Issues = "https://github.com/philiprehberger/py-rate-limiter/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/philiprehberger_rate_limiter"]
