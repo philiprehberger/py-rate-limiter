@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "philiprehberger-rate-limiter"
-version = "0.1.0"
+version = "0.1.1"
 description = "In-memory rate limiter with sliding window and token bucket"
 readme = "README.md"
 license = "MIT"
@@ -20,9 +20,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/philiprehberger/py-rate-limiter"
+Homepage = "https://github.com/philiprehberger/py-rate-limiter#readme"
 Repository = "https://github.com/philiprehberger/py-rate-limiter"
 Issues = "https://github.com/philiprehberger/py-rate-limiter/issues"
+Changelog = "https://github.com/philiprehberger/py-rate-limiter/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/philiprehberger_rate_limiter"]
