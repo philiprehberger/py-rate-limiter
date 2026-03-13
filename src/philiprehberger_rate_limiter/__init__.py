@@ -64,6 +64,10 @@ class RateLimiter:
         window_seconds: float,
         algorithm: Algorithm = Algorithm.SLIDING_WINDOW,
     ) -> None:
+        if requests <= 0:
+            raise ValueError("requests must be positive")
+        if window_seconds <= 0:
+            raise ValueError("window_seconds must be positive")
         self.requests = requests
         self.window_seconds = window_seconds
         self.algorithm = algorithm
@@ -108,6 +112,22 @@ class RateLimiter:
             self._fixed_counts.pop(key, None)
             self._sliding_logs.pop(key, None)
             self._bucket_state.pop(key, None)
+
+    def reset_all(self) -> None:
+        """Reset rate limit state for all keys."""
+        with self._lock:
+            self._fixed_counts.clear()
+            self._sliding_logs.clear()
+            self._bucket_state.clear()
+
+    def active_keys(self) -> list[str]:
+        """Return a list of all keys with active rate limit state."""
+        with self._lock:
+            keys: set[str] = set()
+            keys.update(self._fixed_counts)
+            keys.update(self._sliding_logs)
+            keys.update(self._bucket_state)
+            return sorted(keys)
 
     def limit(self, rate: str) -> Callable[..., Any]:
         """Decorator to rate-limit a function.

@@ -63,6 +63,8 @@ RateLimiter(100, 60, Algorithm.TOKEN_BUCKET)
 - `limiter.allow(key)` — Check if request is allowed
 - `limiter.status(key)` — Get detailed `LimitStatus`
 - `limiter.reset(key)` — Reset state for a key
+- `limiter.reset_all()` — Reset state for all keys
+- `limiter.active_keys()` — List all keys with active state
 - `limiter.limit(rate)` — Decorator with rate string (e.g., `"10/minute"`)
 
 ## License
