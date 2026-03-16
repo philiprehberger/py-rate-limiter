@@ -71,6 +71,14 @@ RateLimiter(100, 60, Algorithm.TOKEN_BUCKET)
 - `limiter.active_keys()` — List all keys with active state
 - `limiter.limit(rate)` — Decorator with rate string (e.g., `"10/minute"`)
 
+
+## Development
+
+```bash
+pip install -e .
+python -m pytest tests/ -v
+```
+
 ## License
 
 MIT

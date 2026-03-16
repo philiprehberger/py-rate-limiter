@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- Add Development section to README
+
 ## 0.2.0
 
 - Add `active_keys()` method for monitoring tracked keys
