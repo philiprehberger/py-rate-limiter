@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 (2026-03-27)
+
+- Add `async_acquire(key)` method for async usage with `asyncio.sleep()` polling
+- Add `wait(key, timeout=10.0)` method for synchronous blocking wait
+- Add pytest and mypy configuration to `pyproject.toml`
+- Add issue templates, PR template, and Dependabot config
+- Update README with full badge set and Support section
+
 ## 0.2.3
 
 - Add Development section to README

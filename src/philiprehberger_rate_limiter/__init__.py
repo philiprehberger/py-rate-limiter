@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import functools
 import re
 import threading
@@ -128,6 +129,50 @@ class RateLimiter:
             keys.update(self._sliding_logs)
             keys.update(self._bucket_state)
             return sorted(keys)
+
+    async def async_acquire(self, key: str) -> LimitStatus:
+        """Async version that awaits until quota is available.
+
+        Loops checking ``acquire()`` and sleeping with ``asyncio.sleep()``
+        for small intervals until the request is allowed.
+
+        Args:
+            key: Identifier for the rate limit subject.
+
+        Returns:
+            LimitStatus once the request is allowed.
+        """
+        while True:
+            status = self.status(key)
+            if status.allowed:
+                return status
+            await asyncio.sleep(0.05)
+
+    def wait(self, key: str, timeout: float = 10.0) -> LimitStatus:
+        """Synchronous blocking wait until quota is available.
+
+        Loops calling ``acquire()`` and sleeping with ``time.sleep(0.05)``
+        between attempts. Returns the status once allowed or raises
+        ``RateLimitExceeded`` if *timeout* expires.
+
+        Args:
+            key: Identifier for the rate limit subject.
+            timeout: Maximum time in seconds to wait before raising.
+
+        Returns:
+            LimitStatus once the request is allowed.
+
+        Raises:
+            RateLimitExceeded: If the timeout expires before quota is available.
+        """
+        deadline = time.monotonic() + timeout
+        while True:
+            status = self.status(key)
+            if status.allowed:
+                return status
+            if time.monotonic() >= deadline:
+                raise RateLimitExceeded(status)
+            time.sleep(0.05)
 
     def limit(self, rate: str) -> Callable[..., Any]:
         """Decorator to rate-limit a function.
