@@ -53,6 +53,19 @@ print(f"Remaining: {stats.remaining}")
 print(f"Reset at: {stats.reset_at}")
 ```
 
+### Format status
+
+```python
+from philiprehberger_rate_limiter import RateLimiter
+
+limiter = RateLimiter(100, 60)
+for _ in range(15):
+    limiter.allow("user:123")
+
+print(limiter.format_status("user:123"))
+# "15/100 requests used (85 remaining); resets in 23.5s"
+```
+
 ### Blocking Wait
 
 ```python
@@ -145,6 +158,7 @@ RateLimiter(100, 60, Algorithm.LEAKY_BUCKET)
 | `limiter.allow(key)` | Check if request is allowed |
 | `limiter.status(key)` | Get detailed `LimitStatus` |
 | `limiter.get_stats(key)` | Get `RateLimiterStats` without consuming a request |
+| `limiter.format_status(key)` | Get a human-readable single-line summary (e.g. `"15/100 requests used (85 remaining); resets in 23.5s"`) |
 | `limiter.wait(key, timeout)` | Block until quota available or raise `RateLimitExceeded` |
 | `limiter.async_acquire(key)` | Async wait until quota is available |
 | `limiter.reset(key)` | Reset state for a key |
@@ -157,6 +171,7 @@ RateLimiter(100, 60, Algorithm.LEAKY_BUCKET)
 | `group.get_stats()` | Get shared `RateLimiterStats` |
 | `group.reset()` | Reset shared group state |
 | `rate_limit(calls, period, algorithm)` | Standalone decorator for rate limiting |
+| `format_status(status)` | Format a `LimitStatus` as a human-readable summary string |
 | `Algorithm` | Enum: `FIXED_WINDOW`, `SLIDING_WINDOW`, `TOKEN_BUCKET`, `LEAKY_BUCKET` |
 | `LimitStatus` | Dataclass: `allowed`, `remaining`, `reset_at`, `limit` |
 | `RateLimiterStats` | Dataclass: `current_usage`, `remaining`, `reset_at`, `limit` |

@@ -20,6 +20,7 @@ __all__ = [
     "RateLimitExceeded",
     "RateLimiterGroup",
     "RateLimiterStats",
+    "format_status",
     "rate_limit",
 ]
 
@@ -176,6 +177,25 @@ class RateLimiter:
                     return self._token_bucket_stats(key)
                 case Algorithm.LEAKY_BUCKET:
                     return self._leaky_bucket_stats(key)
+
+    def format_status(self, key: str) -> str:
+        """Return a human-readable summary of the current limit status for a key.
+
+        Format: "{used}/{limit} requests used ({remaining} remaining); resets in {seconds}s"
+
+        Args:
+            key: Identifier for the rate limit subject.
+
+        Returns:
+            Human-readable single-line summary suitable for logging or CLI output.
+        """
+        stats = self.get_stats(key)
+        seconds_until_reset = max(0.0, stats.reset_at - time.monotonic())
+        reset_field = f"{seconds_until_reset:.1f}s"
+        return (
+            f"{stats.current_usage}/{stats.limit} requests used "
+            f"({stats.remaining} remaining); resets in {reset_field}"
+        )
 
     async def async_acquire(self, key: str) -> LimitStatus:
         """Async version that awaits until quota is available.
@@ -531,6 +551,25 @@ def rate_limit(
                 return fn(*args, **kwargs)
             return wrapper
     return decorator
+
+
+def format_status(status: LimitStatus) -> str:
+    """Return a human-readable summary of a ``LimitStatus``.
+
+    Format: "{used}/{limit} requests used ({remaining} remaining); resets in {seconds}s"
+
+    Args:
+        status: A ``LimitStatus`` instance to format.
+
+    Returns:
+        Human-readable single-line summary suitable for logging or CLI output.
+    """
+    used = status.limit - status.remaining
+    seconds_until_reset = max(0.0, status.reset_at - time.monotonic())
+    return (
+        f"{used}/{status.limit} requests used "
+        f"({status.remaining} remaining); resets in {seconds_until_reset:.1f}s"
+    )
 
 
 _UNIT_MAP: dict[str, float] = {

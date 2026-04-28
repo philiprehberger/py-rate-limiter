@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 import pytest
 from philiprehberger_rate_limiter import (
@@ -8,6 +9,7 @@ from philiprehberger_rate_limiter import (
     Algorithm,
     LimitStatus,
     RateLimitExceeded,
+    format_status,
     rate_limit,
 )
 
@@ -521,3 +523,80 @@ def test_all_algorithms_in_enum():
     assert "SLIDING_WINDOW" in names
     assert "TOKEN_BUCKET" in names
     assert "LEAKY_BUCKET" in names
+
+
+# --- format_status tests (v0.5.0) ---
+
+
+class TestFormatStatus:
+    def test_contains_used_over_limit(self):
+        limiter = RateLimiter(100, 60.0)
+        for _ in range(15):
+            limiter.allow("user-123")
+        out = limiter.format_status("user-123")
+        assert "15/100" in out
+        assert "requests used" in out
+
+    def test_contains_remaining(self):
+        limiter = RateLimiter(100, 60.0)
+        for _ in range(15):
+            limiter.allow("user-123")
+        out = limiter.format_status("user-123")
+        assert "85 remaining" in out
+
+    def test_contains_reset_in_seconds_field(self):
+        limiter = RateLimiter(10, 60.0)
+        limiter.allow("user-1")
+        out = limiter.format_status("user-1")
+        assert re.search(r"\d+\.\d+s", out) is not None
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.FIXED_WINDOW,
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_works_for_each_algorithm(self, algorithm):
+        limiter = RateLimiter(5, 60.0, algorithm)
+        limiter.allow("user-1")
+        out = limiter.format_status("user-1")
+        assert "/5" in out
+        assert "requests used" in out
+        assert "remaining" in out
+        assert "resets in" in out
+        assert re.search(r"\d+\.\d+s", out) is not None
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.FIXED_WINDOW,
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+        ],
+    )
+    def test_zero_remaining_after_limit_hit(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        for _ in range(5):
+            limiter.allow("user-1")
+        out = limiter.format_status("user-1")
+        assert "0 remaining" in out
+
+    def test_leaky_bucket_remaining_reflects_queue(self):
+        # Leaky bucket leaks continuously, so "0 remaining" is rarely sustained;
+        # just verify the format still produces a parseable line under load.
+        limiter = RateLimiter(3, 60.0, Algorithm.LEAKY_BUCKET)
+        for _ in range(5):
+            limiter.allow("user-1")
+        out = limiter.format_status("user-1")
+        assert "remaining" in out
+        assert re.search(r"\d+\.\d+s", out) is not None
+
+    def test_format_status_function_on_limit_status(self):
+        status = LimitStatus(allowed=True, remaining=85, reset_at=0.0, limit=100)
+        out = format_status(status)
+        assert "15/100" in out
+        assert "85 remaining" in out
+        assert re.search(r"\d+\.\d+s", out) is not None

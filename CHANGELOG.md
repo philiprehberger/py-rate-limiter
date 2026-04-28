@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (2026-04-27)
+
+- Add `format_status(key)` returning a human-readable line ("15/100 requests used (85 remaining); resets in 23.5s") for logging and CLI output
+
 ## 0.4.0 (2026-04-01)
 
 - Add `LEAKY_BUCKET` algorithm as a fourth strategy option
@@ -23,18 +27,18 @@
 - Add issue templates, PR template, and Dependabot config
 - Update README with full badge set and Support section
 
-## 0.2.3
+## 0.2.3 (2026-03-22)
 
 - Add Development section to README
 
-## 0.2.0
+## 0.2.0 (2026-03-18)
 
 - Add `active_keys()` method for monitoring tracked keys
 - Add `reset_all()` method to clear all rate limit state
 - Validate constructor arguments (requests and window_seconds must be positive)
 - Expand test suite with 15 new tests (24 total)
 
-## 0.1.1
+## 0.1.1 (2026-03-13)
 
 - Add project URLs to pyproject.toml
 
