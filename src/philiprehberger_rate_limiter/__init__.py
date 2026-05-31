@@ -178,6 +178,111 @@ class RateLimiter:
                 case Algorithm.LEAKY_BUCKET:
                     return self._leaky_bucket_stats(key)
 
+    def remaining(self, key: str) -> int:
+        """Return how many requests are still allowed in the current window/budget.
+
+        Read-only — does not consume a request. Computation depends on algorithm:
+
+        - Sliding window: ``requests - count of timestamps within the window``
+        - Token bucket: ``floor(current_tokens)`` after a virtual refill
+        - Leaky bucket: ``floor(requests - current_water_level)`` after a virtual leak
+        - Fixed window: ``requests - count`` for the current window
+
+        Args:
+            key: Identifier for the rate limit subject.
+
+        Returns:
+            Integer number of requests still allowed for *key*.
+        """
+        with self._lock:
+            now = time.monotonic()
+            match self.algorithm:
+                case Algorithm.FIXED_WINDOW:
+                    window_start = now - (now % self.window_seconds)
+                    count, start = self._fixed_counts.get(key, (0, window_start))
+                    if start != window_start:
+                        count = 0
+                    return max(0, self.requests - count)
+                case Algorithm.SLIDING_WINDOW:
+                    if key not in self._sliding_logs:
+                        return self.requests
+                    cutoff = now - self.window_seconds
+                    usage = sum(1 for t in self._sliding_logs[key] if t > cutoff)
+                    return max(0, self.requests - usage)
+                case Algorithm.TOKEN_BUCKET:
+                    rate = self.requests / self.window_seconds
+                    tokens, last_refill = self._bucket_state.get(
+                        key, (float(self.requests), now)
+                    )
+                    elapsed = now - last_refill
+                    tokens = min(float(self.requests), tokens + elapsed * rate)
+                    return int(tokens)
+                case Algorithm.LEAKY_BUCKET:
+                    leak_rate = self.requests / self.window_seconds
+                    water_level, last_check = self._leaky_state.get(key, (0.0, now))
+                    elapsed = now - last_check
+                    water_level = max(0.0, water_level - elapsed * leak_rate)
+                    return max(0, int(float(self.requests) - water_level))
+
+    def reset_at(self, key: str) -> float:
+        """Return the monotonic timestamp when capacity for at least one request is available.
+
+        Read-only — does not consume a request. When the limit already has
+        capacity, returns the current ``time.monotonic()``.
+
+        - Sliding window: the time when the oldest in-window timestamp falls off
+        - Token bucket: the time at which the bucket holds 1 token
+        - Leaky bucket: the time at which the bucket has room for 1 more request
+        - Fixed window: the end of the current window when full, else now
+
+        Args:
+            key: Identifier for the rate limit subject.
+
+        Returns:
+            Monotonic timestamp (seconds) when capacity becomes available.
+        """
+        with self._lock:
+            now = time.monotonic()
+            match self.algorithm:
+                case Algorithm.FIXED_WINDOW:
+                    window_start = now - (now % self.window_seconds)
+                    window_end = window_start + self.window_seconds
+                    count, start = self._fixed_counts.get(key, (0, window_start))
+                    if start != window_start:
+                        count = 0
+                    if count < self.requests:
+                        return now
+                    return window_end
+                case Algorithm.SLIDING_WINDOW:
+                    if key not in self._sliding_logs:
+                        return now
+                    cutoff = now - self.window_seconds
+                    log = self._sliding_logs[key]
+                    in_window = [t for t in log if t > cutoff]
+                    if len(in_window) < self.requests:
+                        return now
+                    return in_window[0] + self.window_seconds
+                case Algorithm.TOKEN_BUCKET:
+                    rate = self.requests / self.window_seconds
+                    tokens, last_refill = self._bucket_state.get(
+                        key, (float(self.requests), now)
+                    )
+                    elapsed = now - last_refill
+                    tokens = min(float(self.requests), tokens + elapsed * rate)
+                    if tokens >= 1.0:
+                        return now
+                    needed = 1.0 - tokens
+                    return now + (needed / rate if rate > 0 else 0.0)
+                case Algorithm.LEAKY_BUCKET:
+                    leak_rate = self.requests / self.window_seconds
+                    water_level, last_check = self._leaky_state.get(key, (0.0, now))
+                    elapsed = now - last_check
+                    water_level = max(0.0, water_level - elapsed * leak_rate)
+                    if water_level + 1.0 <= float(self.requests):
+                        return now
+                    overflow = water_level + 1.0 - float(self.requests)
+                    return now + (overflow / leak_rate if leak_rate > 0 else 0.0)
+
     def format_status(self, key: str) -> str:
         """Return a human-readable summary of the current limit status for a key.
 

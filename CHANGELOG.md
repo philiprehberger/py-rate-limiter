@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 (2026-05-30)
+
+- Add `RateLimiter.remaining(key)` returning unconsumed budget
+- Add `RateLimiter.reset_at(key)` returning the UNIX timestamp when capacity becomes available
+
 ## 0.5.0 (2026-04-27)
 
 - Add `format_status(key)` returning a human-readable line ("15/100 requests used (85 remaining); resets in 23.5s") for logging and CLI output

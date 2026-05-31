@@ -53,6 +53,24 @@ print(f"Remaining: {stats.remaining}")
 print(f"Reset at: {stats.reset_at}")
 ```
 
+### Querying budget without consuming
+
+```python
+from philiprehberger_rate_limiter import RateLimiter, Algorithm
+import time
+
+limiter = RateLimiter(100, 60, Algorithm.SLIDING_WINDOW)
+for _ in range(15):
+    limiter.allow("user-123")
+
+# How many requests still allowed (does not consume a request)
+print(limiter.remaining("user-123"))  # 85
+
+# Monotonic timestamp when capacity for one more request is available
+reset = limiter.reset_at("user-123")
+print(f"Available in {max(0.0, reset - time.monotonic()):.1f}s")
+```
+
 ### Format status
 
 ```python
@@ -158,6 +176,8 @@ RateLimiter(100, 60, Algorithm.LEAKY_BUCKET)
 | `limiter.allow(key)` | Check if request is allowed |
 | `limiter.status(key)` | Get detailed `LimitStatus` |
 | `limiter.get_stats(key)` | Get `RateLimiterStats` without consuming a request |
+| `limiter.remaining(key)` | Get the number of requests still allowed for `key` without consuming |
+| `limiter.reset_at(key)` | Monotonic timestamp when capacity for one more request is available |
 | `limiter.format_status(key)` | Get a human-readable single-line summary (e.g. `"15/100 requests used (85 remaining); resets in 23.5s"`) |
 | `limiter.wait(key, timeout)` | Block until quota available or raise `RateLimitExceeded` |
 | `limiter.async_acquire(key)` | Async wait until quota is available |

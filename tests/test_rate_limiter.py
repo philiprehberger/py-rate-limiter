@@ -600,3 +600,84 @@ class TestFormatStatus:
         assert "15/100" in out
         assert "85 remaining" in out
         assert re.search(r"\d+\.\d+s", out) is not None
+
+
+# --- remaining() and reset_at() tests (v0.6.0) ---
+
+
+import time as _time  # noqa: E402
+
+
+class TestRemainingAndResetAt:
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_remaining_after_partial_consumption(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        limiter.allow("user1")
+        limiter.allow("user1")
+        assert limiter.remaining("user1") == 1
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_remaining_zero_after_full_consumption(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        limiter.allow("user1")
+        limiter.allow("user1")
+        limiter.allow("user1")
+        assert limiter.remaining("user1") == 0
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_reset_at_returns_future_time_when_at_limit(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        for _ in range(3):
+            limiter.allow("user1")
+        now = _time.monotonic()
+        reset = limiter.reset_at("user1")
+        assert isinstance(reset, float)
+        assert reset > now
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_remaining_for_unseen_key_returns_full_limit(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        assert limiter.remaining("never-seen-key") == 3
+
+    @pytest.mark.parametrize(
+        "algorithm",
+        [
+            Algorithm.SLIDING_WINDOW,
+            Algorithm.TOKEN_BUCKET,
+            Algorithm.LEAKY_BUCKET,
+        ],
+    )
+    def test_remaining_does_not_consume(self, algorithm):
+        limiter = RateLimiter(3, 60.0, algorithm)
+        limiter.allow("user1")
+        first = limiter.remaining("user1")
+        second = limiter.remaining("user1")
+        assert first == second
